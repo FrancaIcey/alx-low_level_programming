@@ -12,5 +12,5 @@ int i;
 in = 0;
 positive_or_egative(i);
 
-return (0)
+return (0);
 }
