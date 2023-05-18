@@ -1,126 +1,178 @@
-#include "main.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include <ctype.h>
-
+void *_calloc(unsigned int nmemb, unsigned int size);
+int _strdigit(char *s);
+void _puts(char *s);
+void rev_num_str(int start, int end, char *ns);
+int _strlen(char *s);
+char *strmul(char *a, char *b);
 /**
- * _is_zero - determines if any number is zero
- * @argv: argument vector.
+ * _calloc - allocate (`size' * `nmemb') bytes and set to 0
+ * @nmemb: number of elements
+ * @size: number of bytes per element
  *
- * Return: no return.
+ * Return: pointer to memory, or NULL if `nmemb' or `size' is 0 or malloc fail
  */
-void _is_zero(char *argv[])
+void *_calloc(unsigned int nmemb, unsigned int size)
 {
-	int i, isn1 = 1, isn2 = 1;
+	unsigned int i;
+	char *p;
 
-	for (i = 0; argv[1][i]; i++)
-		if (argv[1][i] != '0')
-		{
-			isn1 = 0;
-			break;
-		}
-
-	for (i = 0; argv[2][i]; i++)
-		if (argv[2][i] != '0')
-		{
-			isn2 = 0;
-			break;
-		}
-
-	if (isn1 == 1 || isn2 == 1)
+	if (size == 0 || nmemb == 0)
+		return (NULL);
+	p = malloc(nmemb * size);
+	if (p == NULL)
+		return (NULL);
+	for (i = 0; i < nmemb * size; ++i)
+		p[i] = 0;
+	return (p);
+}
+/**
+ * _strdigit - check if string `s' is composed only of digits
+ * @s: string to check
+ *
+ * Return: 1 if true, 0 if false
+ */
+int _strdigit(char *s)
+{
+	if (*s == '-' || *s == '+')
+		++s;
+	while (*s)
 	{
-		printf("0\n");
-		exit(0);
+		if (*s < '0' || *s > '9')
+		{
+			return (0);
+		}
+		++s;
+	}
+	return (1);
+}
+/**
+ * _puts - print string `s'
+ * @s: string to print
+ */
+void _puts(char *s)
+{
+	while (*s)
+		putchar(*(s++));
+}
+/**
+ * rev_num_str - reverse a number string up to trailing zeros
+ * @start: beginning of number
+ * @end: end of number
+ * @ns: string containing number
+ */
+void rev_num_str(int start, int end, char *ns)
+{
+	int i, j;
+	char tmp;
+
+	while (ns[end] == 0 && end != start)
+		--end;
+	for (i = start, j = end; i <= j; ++i, --j)
+	{
+		tmp = ns[i] + '0';
+		ns[i] = ns[j] + '0';
+		ns[j] = tmp;
 	}
 }
-
 /**
- * _initialize_array - set memery to zero in a new array
- * @ar: char array.
- * @lar: length of the char array.
+ * _strlen - calculate length of string `s'
+ * @s: string to get length of
  *
- * Return: pointer of a char array.
+ * Return: length of string
  */
-char *_initialize_array(char *ar, int lar)
-{
-	int i = 0;
+int _strlen(char *s)
 
-	for (i = 0; i < lar; i++)
-		ar[i] = '0';
-	ar[lar] = '\0';
-	return (ar);
+{
+	int i;
+
+	for (i = 0; s[i]; ++i)
+		;
+	return (i);
 }
-
 /**
- * _checknum - determines length of the number
- * and checks if number is in base 10.
- * @argv: arguments vector.
- * @n: row of the array.
+ * strmul - multply two numbers as strings
+ * @a: first number
+ * @b: second number
  *
- * Return: length of the number.
+ * Return: pointer to result on success, or NULL on failure
  */
-int _checknum(char *argv[], int n)
-{
-	int ln;
+char *strmul(char *a, char *b)
 
-	for (ln = 0; argv[n][ln]; ln++)
-		if (!isdigit(argv[n][ln]))
+{
+	int la, lb, i, j, k, l, neg = 0;
+	char *result;
+	char mul, mul_carry, sum, sum_carry;
+
+	if (*a == '-')
+	{
+		neg ^= 1;
+		++a;
+	}
+	if (*b == '-')
+	{
+		neg ^= 1;
+		++b;
+	}
+	la = _strlen(a);
+	lb = _strlen(b);
+	result = _calloc(la + lb + 1 + neg, sizeof(char));
+	if (result == NULL)
+		return (NULL);
+	if (neg)
+		result[0] = '-';
+	for (i = lb - 1, l = neg; i >= 0; --i, ++l)
+	{
+		mul_carry = 0;
+		sum_carry = 0;
+		for (j = la - 1, k = l; j >= 0; --j, ++k)
 		{
-			printf("Error\n");
-			exit(98);
+			mul = (a[j] - '0') * (b[i] - '0') + mul_carry;
+			mul_carry = mul / 10;
+			mul %= 10;
+			sum = result[k] + mul + sum_carry;
+			sum_carry = sum / 10;
+			sum %= 10;
+			result[k] = sum;
 		}
-
-	return (ln);
+		result[k] = sum_carry + mul_carry;
+	}
+	rev_num_str(neg, k, result);
+	return (result);
 }
-
 /**
- * main - Entry point.
- * program that multiplies two positive numbers.
- * @argc: number of arguments.
- * @argv: arguments vector.
+ * main - multiply two numbers from the command line and print the result
+ * @argc: argument count
+ * @argv: argument list
  *
- * Return: 0 - success.
+ * Return: 0 if successful, 98 if failure
  */
+
 int main(int argc, char *argv[])
+
 {
-	int ln1, ln2, lnout, add, addl, i, j, k, ca;
-	char *nout;
+	char *result;
 
 	if (argc != 3)
-		printf("Error\n"), exit(98);
-	ln1 = _checknum(argv, 1), ln2 = _checknum(argv, 2);
-	_is_zero(argv), lnout = ln1 + ln2, nout = malloc(lnout + 1);
-	if (nout == NULL)
-		printf("Error\n"), exit(98);
-	nout = _initialize_array(nout, lnout);
-	k = lnout - 1, i = ln1 - 1, j = ln2 - 1, ca = addl = 0;
-	for (; k >= 0; k--, i--)
 	{
-		if (i < 0)
-		{
-			if (addl > 0)
-			{
-				add = (nout[k] - '0') + addl;
-				if (add > 9)
-					nout[k - 1] = (add / 10) + '0';
-				nout[k] = (add % 10) + '0';
-			}
-			i = ln1 - 1, j--, addl = 0, ca++, k = lnout - (1 + ca);
-		}
-		if (j < 0)
-		{
-			if (nout[0] != '0')
-				break;
-			lnout--;
-			free(nout), nout = malloc(lnout + 1), nout = _initialize_array(nout, lnout);
-			k = lnout - 1, i = ln1 - 1, j = ln2 - 1, ca = addl = 0;
-		}
-		if (j >= 0)
-		{
-			add = ((argv[1][i] - '0') * (argv[2][j] - '0')) + (nout[k] - '0') + addl;
-			addl = add / 10, nout[k] = (add % 10) + '0';
-		}
+		_puts("Error\n");
+		exit(98);
 	}
-	printf("%s\n", nout);
-	return (0);
+	if (!_strdigit(argv[1]) || !_strdigit(argv[2]))
+	{
+		_puts("Error\n");
+		exit(98);
+	}
+	result = strmul(argv[1], argv[2]);
+	if (result == NULL)
+	{
+		_puts("Error\n");
+		exit(98);
+	}
+	_puts(result);
+	putchar('\n');
+	free(result);
+
+	exit(EXIT_SUCCESS);
 }
